@@ -23,7 +23,7 @@ so it can go on any website. `-root DIR` maps another folder.
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: peterretief/codemap@v0.1.0
+- uses: peterretief/codemap@v0.1.1
   with:
     output: code-map.html
 - uses: actions/upload-artifact@v4
@@ -41,3 +41,7 @@ so it can go on any website. `-root DIR` maps another folder.
   own `go.mod` are left out.
 - The page loads its fonts from Google Fonts, and falls back to system fonts
   without them.
+
+## Licence
+
+MIT
