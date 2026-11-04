@@ -1,0 +1,25 @@
+name: Go code map
+description: Write one HTML page that maps a Go module's packages, files and functions.
+branding:
+  icon: map
+  color: green
+inputs:
+  root:
+    description: The module's folder, in the repository
+    default: .
+  output:
+    description: The page to write, in the repository
+    default: code-map.html
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: stable
+        cache: false
+    - shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        ROOT: ${{ inputs.root }}
+        OUTPUT: ${{ inputs.output }}
+      run: go run . -root "$GITHUB_WORKSPACE/$ROOT" -o "$GITHUB_WORKSPACE/$OUTPUT"
