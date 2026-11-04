@@ -24,7 +24,7 @@ so it can go on any website. `-root DIR` maps another folder.
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: peterretief/codemap@v0.1.2
+- uses: peterretief/codemap@v0.1.3
   with:
     output: code-map.html
 - uses: actions/upload-artifact@v4

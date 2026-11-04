@@ -5,6 +5,15 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "
 const num = n => n.toLocaleString("en");
 $("module").textContent = DATA.module;
 
+// Dark unless the viewer chose light.
+const setTheme = t => { document.documentElement.dataset.theme = t; $("theme").textContent = t === "dark" ? "Light" : "Dark"; };
+try { if (localStorage.getItem("codemap-theme") === "light") setTheme("light"); } catch {}
+$("theme").addEventListener("click", () => {
+  const t = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  setTheme(t);
+  try { localStorage.setItem("codemap-theme", t); } catch {}
+});
+
 // Packages are coloured by their top-level folder in the module.
 const PALETTE = ["store", "net", "web", "mail", "people", "app", "util"];
 const tops = {};
