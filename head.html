@@ -40,8 +40,8 @@ h2 { font: 600 19px/1.2 var(--display); margin: 0 0 4px; text-wrap: balance; }
 section { margin-top: 30px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 6px 0 10px; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-#map { display: block; width: 100%; min-width: 900px; height: auto; }
-.mapwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow-x: auto; }
+#map { display: block; margin: 0 auto; }
+.mapwrap { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: auto; max-height: 78vh; }
 svg text { font: 12px var(--mono); fill: var(--ink); }
 .node { cursor: pointer; }
 .node rect { fill: var(--panel); stroke-width: 1.5; }
@@ -67,7 +67,7 @@ svg text { font: 12px var(--mono); fill: var(--ink); }
 .item:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .node { outline: none; }
 .node:focus-visible rect:first-of-type { stroke-width: 3; }
-.item .n { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.item .n { flex: 1; min-width: 0; overflow-wrap: break-word; }
 .item .c { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .dot { width: 8px; height: 8px; border-radius: 2px; flex: none; transform: translateY(-1px); }
 .pdoc { padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
@@ -107,8 +107,8 @@ input[type=search] { font: 14px var(--body); padding: 8px 12px; border: 1px soli
   <section>
     <h2>How the packages fit together</h2>
     <div class="legend" id="legend"></div>
-    <div class="mapwrap"><svg id="map" role="img" aria-label="Package dependency map"></svg></div>
-    <p class="hint" id="hint">Each row builds only on the rows below it, within the module. Box width grows with the number of functions. Lines show direct links; ones already implied by others are hidden. Pick a package to see everything <em class="d">it uses</em> and <em class="u">that uses it</em>.</p>
+    <div class="mapwrap" id="mapwrap"><svg id="map" role="img" aria-label="Package dependency map"></svg></div>
+    <p class="hint" id="hint">Each row builds only on the rows below it, within the module; a long row wraps onto more lines. Box width grows with the number of functions. Lines show direct links; ones already implied by others are hidden. Pick a package to see everything <em class="d">it uses</em> and <em class="u">that uses it</em>.</p>
   </section>
 
   <section>

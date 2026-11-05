@@ -49,26 +49,40 @@ PKGS.forEach(p => depth(p.path));
 const rows = [];
 for (const p of PKGS) (rows[layer[p.path]] ||= []).push(p.path);
 const W = p => Math.max(64, 16 + p.length * 7.4) + Math.min(60, byPath[p].nfn / 4);
-const ROWH = 62, PADX = 24, GAP = 10, TOP = 10;
+// A row wider than the page wraps onto more lines, and the map scrolls: it's
+// never shrunk, so a big module's names stay readable.
+const LINEW = 1160, LINEH = 42, LAYERGAP = 20, PADX = 24, GAP = 10, TOP = 12, width = LINEW + 2 * PADX;
 const pos = {};
 // Order each row by where the packages it uses sit, so lines cross less.
+let up = 0;
 rows.forEach((row, i) => {
-  if (i > 0) row.sort((a, b) => {
-    const c = p => { const xs = byPath[p].imports.filter(x => pos[x]).map(x => pos[x].cx); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
-    return c(a) - c(b);
-  });
-  let x = PADX;
-  for (const p of row) { const w = W(p); pos[p] = {x, w, cx: x + w / 2}; x += w + GAP; }
-  row.width = x - GAP + PADX;
+  if (i > 0) {
+    const mid = p => { const xs = byPath[p].imports.filter(x => pos[x]).map(x => pos[x].cx); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : 0; };
+    const at = Object.fromEntries(row.map(p => [p, mid(p)]));
+    row.sort((a, b) => at[a] - at[b]);
+  }
+  const lines = [[]];
+  let used = 0;
+  for (const p of row) {
+    const w = W(p);
+    if (used && used + w > LINEW) { lines.push([]); used = 0; }
+    lines[lines.length - 1].push(p);
+    used += w + GAP;
+  }
+  for (const line of lines) {
+    const total = line.reduce((s, p) => s + W(p) + GAP, -GAP);
+    let x = Math.max(PADX, (width - total) / 2);
+    for (const p of line) { const w = W(p); pos[p] = {x, w, cx: x + w / 2, up}; x += w + GAP; }
+    up += LINEH;
+  }
+  up += LAYERGAP;
 });
-const width = Math.max(...rows.map(r => r.width), 600);
-const height = TOP + rows.length * ROWH;
-rows.forEach((row, i) => {
-  const shift = (width - row.width) / 2;
-  for (const p of row) { pos[p].x += shift; pos[p].cx += shift; pos[p].y = height - (i + 1) * ROWH + 14; }
-});
+const height = TOP + up;
+for (const p of Object.values(pos)) p.y = height - p.up - LINEH - LAYERGAP / 2;
 const svg = $("map");
 svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+svg.style.width = width + "px";
+svg.style.height = height + "px";
 // A link already implied by others (A uses B, B uses C, so A reaches C) is
 // drawn only when A or C is picked, which keeps the map readable.
 const reachMemo = {};
@@ -115,8 +129,9 @@ svg.addEventListener("click", ev => {
 svg.addEventListener("keydown", ev => { const n = ev.target.closest(".node"); if (n && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); select(n.dataset.p, true); } });
 
 // --- The browser.
-// Open on the package at the top of the map: the module's main command.
-let curPkg = rows[rows.length - 1][0], curFile = "", query = "", exportedOnly = false;
+// Open on the module's own package or command, or else its largest.
+const opening = [DATA.name, "cmd/" + DATA.name].find(p => byPath[p]) || [...PKGS].sort((a, b) => b.nfn - a.nfn)[0].path;
+let curPkg = opening, curFile = "", query = "", exportedOnly = false;
 const sig = (f, p) => `<span class="r">${f.r ? "(" + esc(f.r) + ") " : ""}</span><span class="${f.e ? "x" : ""}">${esc(f.n)}</span>`;
 const maxLen = Math.max(...PKGS.flatMap(p => p.files.flatMap(f => f.funcs.map(x => x.s))));
 const fnRow = (f, p, file, showWhere) => `<div class="fn">
@@ -129,7 +144,7 @@ function renderPkgs() {
   const list = [...PKGS].sort((a, b) => b.nfn - a.nfn);
   $("pkgs").innerHTML = `<div class="colhead">Packages, largest first</div>` + list.map(p =>
     `<button class="item${p.path === curPkg ? " on" : ""}" data-pkg="${esc(p.path)}"><span class="dot" style="background:${color(p.path)}"></span>
-      <span class="n">${esc(p.path)}</span><span class="c">${p.nfn}</span></button>`).join("");
+      <span class="n">${esc(p.path).replaceAll("/", "/<wbr>")}</span><span class="c">${p.nfn}</span></button>`).join("");
 }
 function renderFiles() {
   const p = byPath[curPkg];
@@ -166,9 +181,14 @@ function select(p, scroll, quiet) {
   if (!quiet) highlight(p);
   if (scroll) $("files").scrollTop = 0;
 }
-$("pkgs").addEventListener("click", ev => { const b = ev.target.closest("[data-pkg]"); if (b) select(b.dataset.pkg); });
+// Bring a package picked from the lists into view on the map.
+function showOnMap(p) {
+  const wrap = $("mapwrap"), q = pos[p];
+  if (q && wrap.scrollTo) wrap.scrollTo({top: q.y - wrap.clientHeight / 2, left: q.cx - wrap.clientWidth / 2, behavior: "smooth"});
+}
+$("pkgs").addEventListener("click", ev => { const b = ev.target.closest("[data-pkg]"); if (b) { select(b.dataset.pkg); showOnMap(b.dataset.pkg); } });
 $("files").addEventListener("click", ev => {
-  const g = ev.target.closest("[data-go]"); if (g) { select(g.dataset.go, true); return; }
+  const g = ev.target.closest("[data-go]"); if (g) { select(g.dataset.go, true); showOnMap(g.dataset.go); return; }
   const b = ev.target.closest("[data-file]"); if (b) { curFile = b.dataset.file; renderFiles(); renderFns(); }
 });
 $("q").addEventListener("input", ev => { query = ev.target.value.trim().toLowerCase(); renderFns(); });

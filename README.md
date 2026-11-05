@@ -20,11 +20,15 @@ go run github.com/peterretief/codemap@latest -o code-map.html
 Then open `code-map.html` in a browser. It's one file with nothing to serve,
 so it can go on any website. `-root DIR` maps another folder.
 
+It's been checked against a plain-text count on cobra, gin, hugo, prometheus
+and kubernetes: packages, files and functions all match. Kubernetes (1,278
+packages, 34,823 functions) takes under 2 seconds and makes a 4.5 MB page.
+
 ## In GitHub Actions
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: peterretief/codemap@v0.1.3
+- uses: peterretief/codemap@v0.2.0
   with:
     output: code-map.html
 - uses: actions/upload-artifact@v4
@@ -37,6 +41,8 @@ so it can go on any website. `-root DIR` maps another folder.
 
 - Each row builds only on the rows below it, so the foundations are at the
   bottom and your commands at the top.
+- A long row wraps onto more lines, and the map scrolls, so names stay readable
+  however big the module is.
 - Wider boxes have more functions, and colours are top-level folders.
 - Lines show direct links; ones already implied by others appear when you
   pick a package.
