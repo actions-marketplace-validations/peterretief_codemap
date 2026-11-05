@@ -51,6 +51,11 @@ packages, 34,823 functions) takes under 2 seconds and makes a 4.5 MB page.
 - The page loads its fonts from Google Fonts, and falls back to system fonts
   without them.
 
+## Other languages
+
+[perl-codemap](https://github.com/interrupt21h/perl-codemap) does the same for
+Perl.
+
 ## Licence
 
 MIT
